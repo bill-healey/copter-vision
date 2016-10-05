@@ -41,7 +41,7 @@ if __name__ == '__main__':
         k = cv2.waitKey(30) & 0xff
         if k == 27:
             break
-        sleep(2.0)
+        sleep(.2)
 
         if not found:
             print('chessboard not found')
@@ -53,10 +53,11 @@ if __name__ == '__main__':
         print('ok')
 
     # calculate camera distortion
-    rms, camera_matrix, dist_coefs, rvecs, tvecs = cv2.calibrateCamera(obj_points, img_points, (w, h), None, None)
+    ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(obj_points, img_points, (w, h), None, None)
+    np.savez("webcam_calibration_ouput.npz", ret=ret, mtx=mtx, dist=dist, rvecs=rvecs, tvecs=tvecs)
 
-    print("\nRMS:", rms)
-    print("camera matrix:\n", camera_matrix)
-    print("distortion coefficients: ", dist_coefs.ravel())
+    print("\nRMS:", ret)
+    print("camera matrix:\n", mtx)
+    print("distortion coefficients: ", dist.ravel())
 
     cv2.destroyAllWindows()

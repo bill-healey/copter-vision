@@ -13,6 +13,7 @@ while(1):
 
      # Find the chess board corners
     found_chessboard, corners = cv2.findChessboardCorners(gray, (7,6), None)
+    gray = cv2.morphologyEx(gray, cv2.MORPH_OPEN, (3,3))
 
     # If found, add object points, image points (after refining them)
     if found_chessboard == True:
@@ -20,7 +21,7 @@ while(1):
         cv2.imwrite(filename, frame)
         print 'Captured {}\n'.format(filename)
 
-    cv2.imshow('frame', frame)
+    cv2.imshow('gray', gray)
 
     # Handle Keyboard input
 
