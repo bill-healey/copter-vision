@@ -119,7 +119,7 @@ class Markers:
     QUADRILATERAL_POINTS = 4
     BLACK_THRESHOLD = 100
     WHITE_THRESHOLD = 155
-    MARKER_NAME_INDEX = 3
+    MARKER_NAME_INDEX = 2
 
     def __init__(self):
         pass
@@ -129,7 +129,7 @@ class Markers:
 
         # Stage 1: Detect edges in image
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        gray = cv2.GaussianBlur(gray, (5,5), 0)
+        gray = cv2.GaussianBlur(gray, (3,3), 0)
         edges = cv2.Canny(gray, 100, 200)
 
         # Stage 2: Find contours
@@ -169,10 +169,10 @@ class Markers:
                     # Stage 8: Duplicate marker check
                     if marker_name in [marker[self.MARKER_NAME_INDEX] for marker in markers]: continue
 
-                    # Stage 9: Get position and skew
-                    skew = (src[0][1] - src[3][1] ) / ( src[1][1] - src[2][1])
-                    #print 'skew: {}\n{}'.format(skew, src)
-
-                    markers.append([src, skew, marker_rotation, marker_name])
+                    markers.append([src, marker_rotation, marker_name])
 
         return markers
+
+    @staticmethod
+    def polygon_area(vertices):
+        return 0.5*np.abs(np.dot(vertices[:,0],np.roll(vertices[:,1],1))-np.dot(vertices[:,1],np.roll(vertices[:,0],1)))
