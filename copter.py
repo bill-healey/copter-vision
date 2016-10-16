@@ -2,11 +2,10 @@ import subprocess
 from time import sleep
 import numpy as np
 import cv2
-import display
 from markers import Markers
-from joystick_input import JoystickInput
 from copter_controller import CopterController
 from display import Display
+from joystick_input import JoystickInput
 
 class CopterVision():
     termination_criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
@@ -24,31 +23,6 @@ class CopterVision():
         self.markers = Markers()
         self.controller = CopterController()
         self.markers_cache = None
-
-    def onSettingsChange(self, arg):
-        pass
-
-    def draw_axis(self, img, corners, imgpts):
-         corner = tuple(corners[0].ravel())
-         img = cv2.line(img, corner, tuple(imgpts[0].ravel()), (255,0,0), 5)
-         img = cv2.line(img, corner, tuple(imgpts[1].ravel()), (0,255,0), 5)
-         img = cv2.line(img, corner, tuple(imgpts[2].ravel()), (0,0,255), 5)
-         return img
-
-    def draw_cube(self, img, corners, pts):
-        pts = np.int32(pts).reshape(-1,2)
-
-        # draw ground floor in green
-        #img = cv2.drawContours(img, [pts[:4]],-1,(0,255,0),-3)
-
-        # draw pillars in blue color
-        for i,j in zip(range(4),range(4,8)):
-            img = cv2.line(img, tuple(pts[i]), tuple(pts[j]),(255),3)
-
-        # draw top layer in red color
-        #img = cv2.drawContours(img, [pts[4:]],-1,(0,0,255),3)
-
-        return img
 
     def start_orbslam(self):
         self.proc = subprocess.Popen(['D:\\orbslam\\ORB_SLAM2\\Examples\\Live'], stdout=subprocess.PIPE)
@@ -71,8 +45,6 @@ class CopterVision():
         else:
             gray = frame
         self.frames_to_display['gray'] = gray
-
-        markers = []
 
         markers = self.markers.detect(frame)
 
@@ -109,16 +81,14 @@ class CopterVision():
             #Draw offset arrows
             cv2.arrowedLine(frame, frame_center, target_midpoint, (0,255,255))
             cv2.arrowedLine(frame, frame_center, (int(frame_center[0] + skew * 100.0), frame_center[1]), (0,255,255))
-            #cv2.arrowedLine(frame, frame_center, (midpoint[0] - aileron, midpoint[1]), (0,255,255))
-            #cv2.arrowedLine(frame, (midpoint[0], midpoint[1]), (midpoint[0] + pitch, midpoint[1] - pitch), (0,255,255))
 
             #Control copter
-            vertical_dist = target_midpoint[1] - frame_center[1]
-            side_dist = frame_center[0] - target_midpoint[0]
-            forward_dist = target_camera_closeness - relative_marker_camera_distance
+            vertical_dist = float(target_midpoint[1]) / float(frame_center[1]) - 1.0
+            side_dist = float(target_midpoint[0])  / float(frame_center[0]) - 1.0
+            forward_dist = float(target_camera_closeness) / float(relative_marker_camera_distance) - 1.0
             yaw_dist = skew
-            print '{:.02f} {:.02f} {:.02f} {:.02f}'.format(vertical_dist, side_dist, forward_dist, yaw_dist)
-            self.controller.update(vertical_dist, side_dist, forward_dist, yaw_dist, self.display)
+            #print '{:.02f} {:.02f} {:.02f} {:.02f}'.format(vertical_dist, side_dist, forward_dist, yaw_dist)
+            self.controller.update(vertical_dist, side_dist, forward_dist, yaw_dist)
 
         self.frames_to_display['color'] = frame
 
@@ -127,6 +97,7 @@ class CopterVision():
             if value is not None:
                 cv2.imshow(key, value)
         self.frames_to_display = {}
+
     def handle_keyboard_input(self):
         k = cv2.waitKey(30) & 0xff
         if k == 27:
@@ -144,11 +115,12 @@ class CopterVision():
         return frame
 
     def process_loop(self):
-        #frame = self.load_frame_from_file('calibration_images\calibrate_1475552618.png')
         frame = self.capture_frame()
         self.process_frame(frame)
         self.display_frames(self.frames_to_display)
         self.handle_keyboard_input()
+        self.display.rerender()
+        sleep(.01)
 
     def cleanup(self):
         self.cap.release()

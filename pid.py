@@ -17,7 +17,7 @@ class PIDController:
         self.output = self.clamp(0.0)
         self.i_term = self.clamp(0.0)
         self.mode = 'auto'
-        self.display = False
+        self.display = Display()
 
         if p < 0 or i < 0 or d < 0:
             raise ValueError('Invalid PIDs, use direction=\'reverse\'')
@@ -195,7 +195,7 @@ class PIDController:
         else:
             self.tune['stable_since'] = None
 
-    def compute(self, cur_time_secs, setpoint, input, output_display=None):
+    def compute(self, cur_time_secs, setpoint, input):
         if self.mode == 'manual':
             return
 
@@ -235,7 +235,7 @@ class PIDController:
             'd': -self.kd * time_weighted_input_delta,
         })
 
-        data = [(d['time']-self.historic_data['timeseries'][0]['time'], d['input'], d['setpoint']) for d in self.historic_data['timeseries']]
+        #data = [(d['time']-self.historic_data['timeseries'][0]['time'], d['input'], d['setpoint']) for d in self.historic_data['timeseries']]
 
         output_text = '{} {} diff: {:.02f} setpoint_crossings {} p {:.06f} pterm: {:.02f} iterm: {:.02f} dterm: {:.02f}'.format(
             self.name,
@@ -247,11 +247,13 @@ class PIDController:
             self.i_term,
             -self.kd * time_weighted_input_delta)
 
-        if output_display and (self.mode == 'tune' or self.display):
-            output_display.graph_data(data,
-                                        self.in_min,
-                                        self.in_max,
-                                        output_text)
+        self.display.add_point(
+            self.name,
+            output_text,
+            [input, setpoint],
+            self.in_min,
+            self.in_max
+        )
 
         #print '{} time {} p {:.02f} i {:.02f} d {:.02f}'.format(
         #    self.name,
