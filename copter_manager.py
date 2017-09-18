@@ -1,13 +1,13 @@
-import subprocess
 from time import sleep
 import numpy as np
 import cv2
 from markers import Markers
 from copter_controller import CopterController
 from display import Display
+from orbslam import OrbSlam
 from joystick_input import JoystickInput
 
-class CopterVision():
+class CopterManager():
     termination_criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
     pattern_size = (3, 3)
     pattern_points = np.zeros((np.prod(pattern_size), 3), np.float32)
@@ -23,16 +23,9 @@ class CopterVision():
         self.markers = Markers()
         self.controller = CopterController()
         self.markers_cache = None
+        self.orbslam = OrbSlam()
 
-    def start_orbslam(self):
-        self.proc = subprocess.Popen(['D:\\orbslam\\ORB_SLAM2\\Examples\\Live'], stdout=subprocess.PIPE)
-
-    def read_orbslam_pose(self):
-        if self.proc is None:
-            return
-        line = self.proc.stdout.readline()
-        if line != '':
-            print line.rstrip()
+        self.orbslam.connect()
 
     def process_frame(self, frame):
         if frame is None:
@@ -44,9 +37,12 @@ class CopterVision():
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         else:
             gray = frame
-        self.frames_to_display['gray'] = gray
+        #ret,thresh1 = cv2.threshold(frame,200,255,cv2.THRESH_BINARY)
 
-        markers = self.markers.detect(frame)
+        eroded = cv2.erode(gray, np.ones((5,5), np.uint8))
+
+        markers = self.markers.detect(eroded)
+        self.frames_to_display['gray'] = eroded
 
         # manage markers cache
         if markers:
@@ -66,7 +62,8 @@ class CopterVision():
             relative_marker_camera_distance = np.sqrt(Markers.polygon_area(src))
 
             #Frame Center
-            frame_center = tuple(np.divide(gray.shape, 2).astype(int))
+            frame_height, frame_width = tuple(np.divide(gray.shape, 2).astype(int))
+            frame_center = (frame_width, frame_height)
 
             #Target
             target_midpoint = tuple(np.mean(src, axis=0).astype(int))
@@ -123,10 +120,12 @@ class CopterVision():
         sleep(.01)
 
     def cleanup(self):
+        self.controller.kill_throttle()
         self.cap.release()
         raise Exception('Complete')
 
 if __name__ == '__main__':
+    copter_vision = None
     try:
         copter_vision = CopterVision()
         while(True):
@@ -137,5 +136,6 @@ if __name__ == '__main__':
         else:
             raise
     finally:
+        copter_vision.controller.kill_throttle()
         cv2.destroyAllWindows()
 
