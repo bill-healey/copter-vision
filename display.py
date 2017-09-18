@@ -86,3 +86,6 @@ class Display:
                                   1)
 
         pygame.display.update()
+
+    def cleanup(self):
+        pygame.quit()

@@ -124,12 +124,12 @@ class Markers:
     def __init__(self):
         pass
 
-    def detect(self, image):
+    def detect(self, gray):
         markers = []
 
         # Stage 1: Detect edges in image
-        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        gray = cv2.GaussianBlur(gray, (3,3), 0)
+        #gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        #gray = cv2.GaussianBlur(gray, (3,3), 0)
         edges = cv2.Canny(gray, 100, 200)
 
         # Stage 2: Find contours

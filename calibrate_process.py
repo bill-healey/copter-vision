@@ -11,9 +11,9 @@ import os
 
 if __name__ == '__main__':
 
-    img_names = glob.glob('calibration_images/*.png')
+    img_names = glob.glob('superx/*.png')
 
-    pattern_size = (6, 7)
+    pattern_size = (5, 4)
     pattern_points = np.zeros((np.prod(pattern_size), 3), np.float32)
     pattern_points[:, :2] = np.indices(pattern_size).T.reshape(-1, 2)
 
@@ -58,6 +58,17 @@ if __name__ == '__main__':
 
     print("\nRMS:", ret)
     print("camera matrix:\n", mtx)
-    print("distortion coefficients: ", dist.ravel())
+    print("distortion coefficients: ", dist.ravel(), '\n')
+
+    print('Camera.fx: {:.09}'.format(mtx[0][0]))
+    print('Camera.fy: {:.09}'.format(mtx[1][1]))
+    print('Camera.cx: {:.09}'.format(mtx[0][2]))
+    print('Camera.cy: {:.09}'.format(mtx[1][2]))
+
+    print('Camera.k1: {:.09}'.format(dist.ravel()[0]))
+    print('Camera.k2: {:.09}'.format(dist.ravel()[1]))
+    print('Camera.p1: {:.09}'.format(dist.ravel()[2]))
+    print('Camera.p2: {:.09}'.format(dist.ravel()[3]))
+    print('Camera.k3: {:.09}'.format(dist.ravel()[4]))
 
     cv2.destroyAllWindows()

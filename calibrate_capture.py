@@ -2,33 +2,42 @@ import cv2
 import time
 
 
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(1)
+cap.set(4,704) # Width
+cap.set(5,480) # Height
+cap.set(15,0.1) # Gain
 
 
 while(1):
 
-    ret, frame = cap.read()
+    try:
 
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        ret, frame = cap.read()
 
-     # Find the chess board corners
-    found_chessboard, corners = cv2.findChessboardCorners(gray, (7,6), None)
-    gray = cv2.morphologyEx(gray, cv2.MORPH_OPEN, (3,3))
+        if not ret:
+            continue
 
-    # If found, add object points, image points (after refining them)
-    if found_chessboard == True:
-        filename = 'calibrate_{}.png'.format(int(time.time()))
-        cv2.imwrite(filename, frame)
-        print 'Captured {}\n'.format(filename)
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-    cv2.imshow('gray', gray)
+         # Find the chess board corners
+        found_chessboard, corners = cv2.findChessboardCorners(gray, (5,4), None)
+        gray = cv2.morphologyEx(gray, cv2.MORPH_OPEN, (3,3))
 
-    # Handle Keyboard input
+        # If found, add object points, image points (after refining them)
+        if found_chessboard == True:
+            filename = 'calibrate_{}.png'.format(int(time.time()))
+            cv2.imwrite(filename, frame)
+            print 'Captured {}\n'.format(filename)
 
-    k = cv2.waitKey(30) & 0xff
-    if k == 27:
-        break
+        cv2.imshow('gray', gray)
 
+        # Handle Keyboard input
+
+        k = cv2.waitKey(30) & 0xff
+        if k == 27:
+            break
+    except Exception as e:
+        print e
 
 cv2.destroyAllWindows()
 cap.release()

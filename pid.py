@@ -1,5 +1,4 @@
 import random
-import time
 from display import Display
 
 class PIDController:
@@ -53,11 +52,11 @@ class PIDController:
             'stored_params': None,
             'status': None,
             'setpoint': None,
-            'setpoint_min': 0.0,
-            'setpoint_max': 1.0,
-            'stability_time_threshold': 1.0,
-            'stability_timeout': 20.0,
-            'stability_threshold': 0.1
+            'setpoint_min': self.in_min + (self.in_max - self.in_min) / 5.0,
+            'setpoint_max': self.in_max - (self.in_max - self.in_min) / 5.0,
+            'stability_threshold': (self.in_max - self.in_min) / 100.0,
+            'stability_time_threshold': 10.0,
+            'stability_timeout': 30.0,
         }
 
     def begin_tuning(self,
@@ -68,11 +67,6 @@ class PIDController:
                      stability_threshold=None):
         self.tune['status'] = None
         print "Start tuning {}".format(self.name)
-        self.tune['setpoint_min'] = self.in_min + (self.in_max - self.in_min) / 3.0
-        self.tune['setpoint_max'] = self.in_max - (self.in_max - self.in_min) / 3.0
-        self.tune['stability_threshold'] = (self.in_max - self.in_min) / 100.0
-        self.tune['stability_time_threshold'] = 10.0
-        self.tune['stability_timeout'] = 30.0
         if setpoint_min is not None:
             self.tune['setpoint_min'] = setpoint_min
         if setpoint_max is not None:
@@ -163,7 +157,7 @@ class PIDController:
                     self.kp * 1.1)
                 self.tune_randomize_setpoint(input, cur_time_secs)
                 self.kp *= 1.1
-        elif cur_time_secs - self.tune['tune_start_time'] >= self.tune['stability_timeout'] or abs((input - self.last_input) / (cur_time_secs - self.last_time_secs)) < 0.01 or self.tune['setpoint_crossings'] > 10:
+        elif cur_time_secs - self.tune['tune_start_time'] >= self.tune['stability_timeout'] or self.tune['setpoint_crossings'] > 8:
             # Unstable with timeout
             if self.tune['setpoint_crossings'] < 2 or len(self.historic_data['mins']) < 2 or len(self.historic_data['maxes']) < 2:
                 # Not a good tune, continue
@@ -235,8 +229,6 @@ class PIDController:
             'd': -self.kd * time_weighted_input_delta,
         })
 
-        #data = [(d['time']-self.historic_data['timeseries'][0]['time'], d['input'], d['setpoint']) for d in self.historic_data['timeseries']]
-
         output_text = '{} {} diff: {:.02f} setpoint_crossings {} p {:.06f} pterm: {:.02f} iterm: {:.02f} dterm: {:.02f}'.format(
             self.name,
             self.mode,
@@ -247,20 +239,14 @@ class PIDController:
             self.i_term,
             -self.kd * time_weighted_input_delta)
 
-        self.display.add_point(
-            self.name,
-            output_text,
-            [input, setpoint],
-            self.in_min,
-            self.in_max
-        )
-
-        #print '{} time {} p {:.02f} i {:.02f} d {:.02f}'.format(
-        #    self.name,
-        #    time_delta_secs,
-        #    self.kp * error,
-        #    self.i_term,
-        #    - self.kd * time_weighted_input_delta)
+        if self.display:
+            self.display.add_point(
+                self.name,
+                output_text,
+                [input, setpoint],
+                self.in_min,
+                self.in_max
+            )
 
         # Set history vars
         self.last_input = input

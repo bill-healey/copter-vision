@@ -12,7 +12,7 @@ class JoystickInput:
         pygame.joystick.init()
         self.joystick = pygame.joystick.Joystick(0)
         self.joystick.init()
-        #pygame.event.set_allowed(pygame.JOYHATMOTION)
+        pygame.event.set_allowed([pygame.JOYHATMOTION, pygame.KEYDOWN])
 
     def update(self):
 
@@ -24,11 +24,20 @@ class JoystickInput:
         self.hat_state = self.joystick.get_hat(0)
         self.button_state = [self.joystick.get_button(b) for b in xrange(self.joystick.get_numbuttons())]
 
+        if not pygame.event.peek():
+            return
+
         pygame.event.pump()
 
-        #for event in pygame.event.get():
-        #    if event.type == pygame.JOYHATMOTION:
-        #        print event.value
-        #        self.hat_state = event.value
-        #    else:
-        #        print 'Unexpected event {} {}'.format(event.type, event.value)
+        for event in pygame.event.get():
+            if event.type == pygame.JOYHATMOTION:
+                print event.value
+                self.hat_state = event.value
+            elif event.type == pygame.QUIT:
+                raise Exception('Shutdown')
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    raise Exception('Shutdown')
+            else:
+                #print 'Unexpected event {} {}'.format(event.type, event)
+                pass
