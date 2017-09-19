@@ -13,6 +13,7 @@ class CopterMarkerVision():
                        [0,0,-3],[0,3,-3],[3,3,-3],[3,0,-3] ])
 
     def __init__(self):
+        # noinspection PyArgumentList
         self.cap = cv2.VideoCapture(0)
         self.cap.set(15, -7)
         self.frames_to_display = {}

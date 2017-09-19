@@ -2,6 +2,7 @@ import cv2
 import time
 
 
+# noinspection PyArgumentList
 cap = cv2.VideoCapture(1)
 cap.set(4,704) # Width
 cap.set(5,480) # Height
@@ -24,7 +25,7 @@ while(1):
         gray = cv2.morphologyEx(gray, cv2.MORPH_OPEN, (3,3))
 
         # If found, add object points, image points (after refining them)
-        if found_chessboard == True:
+        if found_chessboard:
             filename = 'calibrate_{}.png'.format(int(time.time()))
             cv2.imwrite(filename, frame)
             print 'Captured {}\n'.format(filename)

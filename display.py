@@ -1,12 +1,15 @@
 import pygame
 from collections import OrderedDict
 
+
 class Singleton(type):
     _instances = {}
+
     def __call__(cls, *args, **kwargs):
         if cls not in cls._instances:
-            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
+            cls._instances[cls] = super(Singleton, cls).__call__(*args)
         return cls._instances[cls]
+
 
 class Display:
     __metaclass__ = Singleton
@@ -76,8 +79,11 @@ class Display:
             self.screen.blit(text_surface, text_pos)
 
             for line_id in range(len(graph['points'][0])):
-                scaled_line_points = [ (i,
-                                        graph_top + graph_height - (self.clamp(p[line_id], graph['min_bound'], graph['max_bound']) - graph['min_bound']) * graph_height / (graph['max_bound'] - graph['min_bound'])) for i, p in enumerate(graph['points'])]
+                scaled_line_points = [(i,
+                                       graph_top + graph_height - (
+                                       self.clamp(p[line_id], graph['min_bound'], graph['max_bound']) - graph[
+                                           'min_bound']) * graph_height / (graph['max_bound'] - graph['min_bound'])) for
+                                      i, p in enumerate(graph['points'])]
 
                 pygame.draw.lines(self.screen,
                                   self.line_colors[line_id],

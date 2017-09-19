@@ -1,9 +1,9 @@
 import subprocess
-import sys
 import zmq
 
 class OrbSlam:
     def __init__(self):
+        self.connection_string = 'tcp://localhost:5555'
         self.connect()
 
     def start_orbslam(self):
@@ -20,8 +20,8 @@ class OrbSlam:
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.SUB)
 
-        self.socket.connect("tcp://localhost:5555")
-
+        print 'Attempting connection to ORBSLAM on {}'.format(self.connection_string)
+        self.socket.connect(self.connection_string)
         self.socket.setsockopt_string(zmq.SUBSCRIBE, "pose".decode('ascii'))
 
     def process(self):

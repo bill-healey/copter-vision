@@ -1,16 +1,15 @@
 from time import sleep
-import numpy as np
 import cv2
 from copter_marker_vision import CopterMarkerVision
-from copter_controller import CopterController
+from drone_pids import DronePIDs
 from display import Display
 from orbslam import OrbSlam
 from joystick_input import JoystickInput
 
-class CopterManager():
+class DroneManager():
 
     def __init__(self):
-        self.controller = CopterController()
+        self.pids = DronePIDs()
         self.orbslam = OrbSlam()
         self.display = Display()
         self.marker_vision = CopterMarkerVision()
@@ -31,17 +30,17 @@ class CopterManager():
             raise Exception('Shutdown')
 
     def cleanup(self):
-        self.controller.kill_throttle()
+        self.pids.failsafe()
         self.marker_vision.cleanup()
         self.orbslam.cleanup()
         self.display.cleanup()
 
 if __name__ == '__main__':
-    copter_manager = None
+    drone_manager = None
     try:
-        copter_manager = CopterManager()
+        drone_manager = DroneManager()
         while(True):
-            copter_manager.process_loop()
+            drone_manager.process_loop()
     except Exception as e:
         if e.message == 'Shutdown':
             pass
@@ -49,5 +48,5 @@ if __name__ == '__main__':
             print e
             raise
     finally:
-        copter_manager.cleanup()
+        drone_manager.cleanup()
 
