@@ -1,3 +1,5 @@
+# Author: William Healey http://billhealey.com
+
 from time import sleep
 
 import cv2

@@ -1,3 +1,5 @@
+# Author: William Healey http://billhealey.com
+
 import random
 
 from display import Display
@@ -165,8 +167,8 @@ class PIDController:
                     self.kp * 1.1)
                 self.tune_randomize_setpoint(input_value, cur_time_secs)
                 self.kp *= 1.1
-        elif cur_time_secs - self.tune['tune_start_time'] >= self.tune['stability_timeout'] or \
-                        self.tune['setpoint_crossings'] > 8:
+        elif cur_time_secs - self.tune['tune_start_time'] >= self.tune['stability_timeout'] \
+                or self.tune['setpoint_crossings'] > 8:
             # Unstable with timeout
             if self.tune['setpoint_crossings'] < 2 or len(self.historic_data['mins']) < 2 or len(
                     self.historic_data['maxes']) < 2:

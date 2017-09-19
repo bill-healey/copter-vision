@@ -1,3 +1,5 @@
+# Author: William Healey http://billhealey.com
+
 import subprocess
 
 import zmq

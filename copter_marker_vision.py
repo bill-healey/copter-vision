@@ -1,3 +1,5 @@
+# Author: William Healey http://billhealey.com
+
 import numpy as np
 import cv2
 

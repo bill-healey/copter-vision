@@ -1,3 +1,5 @@
+# Author: William Healey http://billhealey.com
+
 from __future__ import print_function
 from time import sleep
 import glob

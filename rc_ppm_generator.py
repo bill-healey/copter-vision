@@ -1,3 +1,5 @@
+# Author: William Healey http://billhealey.com
+
 import threading
 import time
 
@@ -11,13 +13,13 @@ class RCPPMGenerator:
 
         def __init__(self, pyaudio_instance, stream, shared_data):
             super(RCPPMGenerator.StreamWriterThread, self).__init__()
-            self.stop = False
+            self.terminate = False
             self.pyaudio = pyaudio_instance
             self.stream = stream
             self.shared_data = shared_data
 
         def run(self):
-            while not self.stop:
+            while not self.terminate:
                 self.write()
             self.stream.stop_stream()
             self.stream.close()
@@ -79,8 +81,8 @@ class RCPPMGenerator:
         self.channel_values[channel_index] = value
         self.encode_frame()
 
-    def stop(self):
-        self.write_thread.stop = True
+    def cleanup(self):
+        self.write_thread.terminate = True
         self.pyaudio = None
 
     def generate_bitstream(self, duration_ms, level):
@@ -109,7 +111,7 @@ class RCPPMGenerator:
                                                                         self.SIGNAL_LOW)
 
         frame_duration_ms = float(len(self.shared_data['frame']) * 1000) / self.bitrate
-        print 'Encoded RC PPM frame with total data length {:0.02f}ms {} bytes frame length {:0.02f}ms {} bytes'.format(
+        print 'Encoded RC PPM frame data length {:0.02f}ms {} bytes frame length {:0.02f}ms {} bytes'.format(
             bitstream_duration_ms, len(bitstream),
             frame_duration_ms, len(self.shared_data['frame']))
 
@@ -119,4 +121,4 @@ if __name__ == '__main__':
     time.sleep(0.2)
     rc_ppm.set_channel_values([-1.0] * rc_ppm.NUM_CHANNELS)
     time.sleep(10)
-    rc_ppm.stop()
+    rc_ppm.cleanup()

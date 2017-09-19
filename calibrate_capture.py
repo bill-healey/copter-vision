@@ -1,7 +1,8 @@
+# Author: William Healey http://billhealey.com
+
 import time
 
 import cv2
-
 
 
 # noinspection PyArgumentList

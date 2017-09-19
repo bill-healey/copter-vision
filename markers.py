@@ -1,3 +1,5 @@
+# Code in this file is based on SaltwashAR
+# Modified by William Healey http://billhealey.com
 # GNU GENERAL PUBLIC LICENSE Version 3 (full notice can be found at https://github.com/rdmilligan/SaltwashAR)
 
 import numpy as np
