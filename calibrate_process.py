@@ -1,13 +1,9 @@
-#!/usr/bin/env python
-
-# Python 2/3 compatibility
 from __future__ import print_function
 from time import sleep
+import glob
 
 import numpy as np
 import cv2
-import glob
-import os
 
 if __name__ == '__main__':
 

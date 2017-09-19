@@ -1,21 +1,22 @@
 import pygame
 
-class JoystickInput:
-    aileron = 0.0
-    pitch = 0.0
-    throttle = 0.0
-    rudder = 0.0
-    tside = 0.0
-    hat_state = (0, 0)
 
+class JoystickInput:
     def __init__(self):
+        self.aileron = 0.0
+        self.pitch = 0.0
+        self.throttle = 0.0
+        self.rudder = 0.0
+        self.tside = 0.0
+        self.hat_state = (0, 0)
+        self.button_state = []
+
         pygame.joystick.init()
         self.joystick = pygame.joystick.Joystick(0)
         self.joystick.init()
         pygame.event.set_allowed([pygame.JOYHATMOTION, pygame.KEYDOWN])
 
     def update(self):
-
         self.aileron = self.joystick.get_axis(0)
         self.pitch = self.joystick.get_axis(1)
         self.throttle = -self.joystick.get_axis(2)
@@ -39,5 +40,5 @@ class JoystickInput:
                 if event.key == pygame.K_ESCAPE:
                     raise Exception('Shutdown')
             else:
-                #print 'Unexpected event {} {}'.format(event.type, event)
+                # print 'Unexpected event {} {}'.format(event.type, event)
                 pass

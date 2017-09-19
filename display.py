@@ -1,5 +1,6 @@
-import pygame
 from collections import OrderedDict
+
+import pygame
 
 
 class Singleton(type):
@@ -50,7 +51,8 @@ class Display:
         if len(self.graphs[graph_name]['points']) > self.width:
             self.graphs[graph_name]['points'].pop(0)
 
-    def clamp(self, n, min_bound, max_bound):
+    @staticmethod
+    def clamp(n, min_bound, max_bound):
         return min(max(n, min_bound), max_bound)
 
     def rerender(self):
@@ -81,8 +83,9 @@ class Display:
             for line_id in range(len(graph['points'][0])):
                 scaled_line_points = [(i,
                                        graph_top + graph_height - (
-                                       self.clamp(p[line_id], graph['min_bound'], graph['max_bound']) - graph[
-                                           'min_bound']) * graph_height / (graph['max_bound'] - graph['min_bound'])) for
+                                           self.clamp(p[line_id], graph['min_bound'], graph['max_bound']) - graph[
+                                               'min_bound']) * graph_height / (graph['max_bound'] - graph['min_bound']))
+                                      for
                                       i, p in enumerate(graph['points'])]
 
                 pygame.draw.lines(self.screen,
@@ -95,3 +98,4 @@ class Display:
 
     def cleanup(self):
         pygame.quit()
+        self.graphs = None

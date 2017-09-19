@@ -1,18 +1,17 @@
-import cv2
 import time
+
+import cv2
+
 
 
 # noinspection PyArgumentList
 cap = cv2.VideoCapture(1)
-cap.set(4,704) # Width
-cap.set(5,480) # Height
-cap.set(15,0.1) # Gain
+cap.set(4, 704)  # Width
+cap.set(5, 480)  # Height
+cap.set(15, 0.1)  # Gain
 
-
-while(1):
-
+while 1:
     try:
-
         ret, frame = cap.read()
 
         if not ret:
@@ -20,9 +19,9 @@ while(1):
 
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-         # Find the chess board corners
-        found_chessboard, corners = cv2.findChessboardCorners(gray, (5,4), None)
-        gray = cv2.morphologyEx(gray, cv2.MORPH_OPEN, (3,3))
+        # Find the chess board corners
+        found_chessboard, corners = cv2.findChessboardCorners(gray, (5, 4), None)
+        gray = cv2.morphologyEx(gray, cv2.MORPH_OPEN, (3, 3))
 
         # If found, add object points, image points (after refining them)
         if found_chessboard:
@@ -33,7 +32,6 @@ while(1):
         cv2.imshow('gray', gray)
 
         # Handle Keyboard input
-
         k = cv2.waitKey(30) & 0xff
         if k == 27:
             break
