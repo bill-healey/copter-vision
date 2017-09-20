@@ -5,10 +5,10 @@ from time import sleep
 import cv2
 
 from copter_marker_vision import CopterMarkerVision
-from drone_pids import DronePIDs
 from display import Display
-from orbslam import OrbSlam
+from drone_pids import DronePIDs
 from joystick_input import JoystickInput
+from orbslam import OrbSlam
 
 
 class DroneManager:
@@ -26,7 +26,7 @@ class DroneManager:
         self.display.rerender()
         self.joystick.update()
         self.pids.update(slam_telemetry)
-        sleep(.5)
+        sleep(.05)
 
     def cleanup(self):
         self.pids.failsafe()
@@ -54,4 +54,5 @@ if __name__ == '__main__':
             print e
             raise
     finally:
-        drone_manager.cleanup()
+        if drone_manager:
+            drone_manager.cleanup()

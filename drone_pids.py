@@ -1,7 +1,7 @@
 import time
 
-from pid import PIDController
 from drone_rc_controller import DroneRCController
+from pid import PIDController
 
 
 class DronePIDs:
@@ -25,6 +25,9 @@ class DronePIDs:
                                          output_limits=(-1.0, 1.0), input_limits=(-1.0, 1.0))
 
     def update(self, telemetry):
+        if telemetry is None:
+            return
+
         self.pids['throttle'].compute(time.time(),
                                       setpoint=0.0,
                                       input_value=telemetry['vertical_dist'])
