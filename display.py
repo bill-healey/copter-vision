@@ -33,8 +33,8 @@ class Display:
         ]
 
     def add_point(self, graph_name, text, point_data, min_bound, max_bound):
-        if len(point_data) < 2:
-            raise ValueError('point_data must include time as dimension 0 as well as at least one other line')
+        if len(point_data) < 1:
+            raise ValueError('point_data must include at least one line')
 
         if graph_name not in self.graphs:
             self.graphs[graph_name] = {

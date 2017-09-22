@@ -28,28 +28,28 @@ class DronePIDs:
         if telemetry is None:
             return
 
-        self.pids['throttle'].compute(time.time(),
-                                      setpoint=0.0,
-                                      input_value=telemetry['vertical_dist'])
-        self.pids['pitch'].compute(time.time(),
-                                   setpoint=0.0,
-                                   input_value=telemetry['forward_dist'])
         self.pids['aileron'].compute(time.time(),
                                      setpoint=0.0,
                                      input_value=telemetry['right_dist'])
+        self.pids['pitch'].compute(time.time(),
+                                   setpoint=0.0,
+                                   input_value=telemetry['forward_dist'])
+        self.pids['throttle'].compute(time.time(),
+                                      setpoint=0.0,
+                                      input_value=telemetry['vertical_dist'])
         self.pids['yaw'].compute(time.time(),
                                  setpoint=0.0,
-                                 input_value=telemetry['yaw_dist'])
+                                 input_value=telemetry['yaw'])
 
         self.drone_rc.update_channels(
             self.pids['aileron'].output,
-            self.pids['elevator'].output,
+            self.pids['pitch'].output,
             self.pids['throttle'].output,
-            self.pids['rudder'].output
+            self.pids['yaw'].output
         )
 
-        print 'v{:.02f},s{:.02f},f{:.02f},y{:.02f} throttle{:.02f} pitch{:.02f} aileron{:.02f} yaw{:.02f}'.format(
-            telemetry['vertical_dist'], telemetry['forward_dist'], telemetry['right_dist'], telemetry['yaw_dist'],
+        print 'v {:.02f}, s {:.02f}, f {:.02f}, y {:.02f} throttle {:.02f} pitch {:.02f} aileron {:.02f} yaw {:.02f}'.format(
+            telemetry['vertical_dist'], telemetry['forward_dist'], telemetry['right_dist'], telemetry['yaw'],
             self.pids['throttle'].output, self.pids['pitch'].output, self.pids['aileron'].output,
             self.pids['yaw'].output)
 

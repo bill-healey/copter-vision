@@ -1,6 +1,7 @@
 # Author: William Healey http://billhealey.com
 
 import json
+import math
 import subprocess
 
 import numpy as np
@@ -42,23 +43,36 @@ class OrbSlam:
                 return
             if self.original_pose is None:
                 self.original_pose = np.array(pose_obj)
-            cur_pose = np.matrix(pose_obj)
+            pose = np.matrix(pose_obj)
 
             # Compute Pose Translation Vector
-            mTcw = cur_pose
-            mRcw = mTcw.copy()[:3, :3]
-            mRwc = np.transpose(mRcw.copy())
-            mtcw = mTcw.copy()[:3, 3:]
-            mOw = -np.transpose(mRcw.copy()) * mtcw
+            rot = pose.copy()[:3, :3]  # Rotation matrix
+            mtcw = pose.copy()[:3, 3:]
+            translation = -np.transpose(rot.copy()) * mtcw
 
-            print 'camera position: {:0.03f} {:0.03f} {:0.03f}'.format(
-                mOw.item(0),
-                mOw.item(1),
-                mOw.item(2)
+            roll = math.atan2(rot.item(1, 0), rot.item(0, 0))
+            yaw = math.atan2(-rot.item(2, 0), math.sqrt(rot.item(2, 1) ** 2 + rot.item(2, 2) ** 2))
+            pitch = math.atan2(rot.item(2, 1), rot.item(2, 2))
+
+            print 'camera position: {:0.03f} {:0.03f} {:0.03f} rotation: {:0.03f} {:0.03f} {:0.03f}'.format(
+                translation.item(0),
+                translation.item(1),
+                translation.item(2),
+                yaw,
+                pitch,
+                roll
             )
 
+            return ({
+                'right_dist': translation.item(0),
+                'forward_dist': translation.item(2),
+                'vertical_dist': translation.item(1),
+                'yaw': yaw,
+                'pitch': pitch,
+                'roll': roll,
+            })
+
         except zmq.Again:
-            # print "No SLAM pose received"
             pass
 
     def cleanup(self):

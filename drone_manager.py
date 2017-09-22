@@ -1,5 +1,6 @@
 # Author: William Healey http://billhealey.com
 
+import traceback
 from time import sleep
 
 import cv2
@@ -51,7 +52,7 @@ if __name__ == '__main__':
         if e.message == 'Shutdown':
             pass
         else:
-            print e
+            traceback.print_exc()
             raise
     finally:
         if drone_manager:
