@@ -246,7 +246,7 @@ class PIDController:
         })
 
         output_text = ('{} {} diff: {:.02f} setpoint_crossings {} p {:.06f} '
-                       'pterm: {:.02f} iterm: {:.02f} dterm: {:.02f}').format(
+                       'pterm: {:.02f} iterm: {:.02f} dterm: {:.02f} out: {:.02f}').format(
             self.name,
             self.mode,
             abs(input_value - self.setpoint),
@@ -254,13 +254,15 @@ class PIDController:
             self.kp,
             self.ki * error,
             self.i_term,
-            -self.kd * time_weighted_input_delta)
+            -self.kd * time_weighted_input_delta,
+            self.output
+        )
 
         if self.display:
             self.display.add_point(
                 self.name,
                 output_text,
-                [input_value, setpoint],
+                [input_value, setpoint, self.output],
                 self.in_min,
                 self.in_max
             )

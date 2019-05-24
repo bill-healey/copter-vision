@@ -16,7 +16,7 @@ class Display:
     __metaclass__ = Singleton
 
     def __init__(self):
-        (self.width, self.height) = (800, 600)
+        (self.width, self.height) = (1280, 1024)
         pygame.init()
         pygame.display.set_caption('PID Controllers')
         self.screen = pygame.display.set_mode((self.width, self.height))
@@ -55,46 +55,67 @@ class Display:
     def clamp(n, min_bound, max_bound):
         return min(max(n, min_bound), max_bound)
 
-    def rerender(self):
-
-        if len(self.graphs) == 0:
-            return
-
-        graph_height = 600 / len(self.graphs)
+    def rerender(self, state):
 
         self.screen.fill((0, 0, 0))
 
-        for graph_id, (graph_name, graph) in enumerate(self.graphs.iteritems()):
-            graph_top = graph_id * graph_height
-
-            # Verify sufficient points
-            if len(graph['points']) < 2:
-                continue
-
-            # Render text onto a separate surface, then blit to screen
-            font = pygame.font.Font(None, 14)
-            text = '{} {}'.format(graph['name'], graph['text'])
-            text_surface = font.render(text, 1, (230, 230, 230))
+        if state['slam_telemetry']['telemetry_lost']:
+            font = pygame.font.Font(None, 36)
+            text_surface = font.render('***TELEMETRY LOST***', 1, (240, 100, 100))
             text_pos = text_surface.get_rect()
             text_pos.centerx = self.width / 2
-            text_pos.top = graph_top
+            text_pos.top = 36
             self.screen.blit(text_surface, text_pos)
 
-            for line_id in range(len(graph['points'][0])):
-                scaled_line_points = [(i,
-                                       graph_top + graph_height - (
-                                           self.clamp(p[line_id], graph['min_bound'], graph['max_bound']) - graph[
-                                               'min_bound']) * graph_height / (graph['max_bound'] - graph['min_bound']))
-                                      for
-                                      i, p in enumerate(graph['points'])]
+        if len(self.graphs) > 0:
 
-                pygame.draw.lines(self.screen,
-                                  self.line_colors[line_id],
-                                  False,
-                                  scaled_line_points,
-                                  1)
+            graph_height = self.height / len(self.graphs)
+
+            for graph_id, (graph_name, graph) in enumerate(self.graphs.iteritems()):
+                graph_top = graph_id * graph_height
+
+                # Verify sufficient points
+                if len(graph['points']) < 2:
+                    continue
+
+                # Render text onto a separate surface, then blit to screen
+                font = pygame.font.Font(None, 14)
+                text = '{} {}'.format(graph['name'], graph['text'])
+                text_surface = font.render(text, 1, (230, 230, 230))
+                text_pos = text_surface.get_rect()
+                text_pos.centerx = self.width / 2
+                text_pos.top = graph_top
+                self.screen.blit(text_surface, text_pos)
+
+                for line_id in range(len(graph['points'][0])):
+                    scaled_line_points = [(i,
+                                           graph_top + graph_height - (
+                                               self.clamp(p[line_id], graph['min_bound'], graph['max_bound']) - graph[
+                                                   'min_bound']) * graph_height / (graph['max_bound'] - graph['min_bound']))
+                                          for
+                                          i, p in enumerate(graph['points'])]
+
+                    pygame.draw.lines(self.screen,
+                                      self.line_colors[line_id],
+                                      False,
+                                      scaled_line_points,
+                                      1)
 
         pygame.display.update()
+
+    def get_keyboard_events(self):
+        retval = []
+        for event in pygame.event.get():
+            if event.type==pygame.QUIT:
+                self.cleanup()
+            if event.type==pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    raise Exception('Shutdown')
+                if event.key == pygame.K_SPACE:
+                    retval.append('spacebar')
+                if event.key == pygame.K_s:
+                    retval.append('s')
+        return retval
 
     def cleanup(self):
         pygame.quit()

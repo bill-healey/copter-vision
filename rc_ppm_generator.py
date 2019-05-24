@@ -27,11 +27,14 @@ class RCPPMGenerator:
             print 'PyAudio terminated'
 
         def write(self):
-            self.stream.write(self.shared_data['frame'])
+            if self.shared_data['paused']:
+                time.sleep(0.01)
+            else:
+                self.stream.write(self.shared_data['frame'])
 
     def __init__(self):
         self.SIGNAL_LOW = 0  # Byte value which represents a LOW PPM signal/voltage
-        self.SIGNAL_HIGH = 255  # Byte value which represents a HIGH PPM signal/voltage
+        self.SIGNAL_HIGH = 200  # Byte value which represents a HIGH PPM signal/voltage
         self.CENTER_PW_MS = 1.5  # Length in milliseconds considered to be the 'center' value of the pulse width
         self.DELTA_PW_MS = .5  # Length in milliseconds between the center and the min or max of the pulse width
         self.MIN_PW_MS = .5  # Length in milliseconds of the minimum allowable channel pulse width
@@ -56,11 +59,16 @@ class RCPPMGenerator:
             output=True)
 
         self.shared_data = {
-            'frame': []
+            'frame': [],
+            'paused': False
         }
         self.encode_frame()
         self.write_thread = self.StreamWriterThread(self.pyaudio, self.stream, self.shared_data)
         self.write_thread.start()
+
+    def pause_stream(self):
+        self.shared_data['paused'] = True
+        #self.stream.stop_stream()
 
     def set_channel_values(self, channel_float_array):
         """Sets the value of the channels based on the specified array.
@@ -70,6 +78,7 @@ class RCPPMGenerator:
                 len(channel_float_array), self.NUM_CHANNELS))
         self.channel_values = channel_float_array
         self.encode_frame()
+        self.shared_data['paused'] = False
 
     def set_channel_value(self, channel_index, value):
         """Sets specified channel to the specified value in the range -1.0 to 1.0."""
@@ -80,6 +89,7 @@ class RCPPMGenerator:
                 channel_index, self.NUM_CHANNELS))
         self.channel_values[channel_index] = value
         self.encode_frame()
+        self.shared_data['paused'] = False
 
     def cleanup(self):
         self.write_thread.terminate = True
@@ -111,14 +121,16 @@ class RCPPMGenerator:
                                                                         self.SIGNAL_LOW)
 
         frame_duration_ms = float(len(self.shared_data['frame']) * 1000) / self.bitrate
-        print 'Encoded RC PPM frame data length {:0.02f}ms {} bytes frame length {:0.02f}ms {} bytes'.format(
-            bitstream_duration_ms, len(bitstream),
-            frame_duration_ms, len(self.shared_data['frame']))
+        #print 'Encoded RC PPM frame data length {:0.02f}ms {} bytes frame length {:0.02f}ms {} bytes'.format(
+        #    bitstream_duration_ms, len(bitstream),
+        #    frame_duration_ms, len(self.shared_data['frame']))
 
 
 if __name__ == '__main__':
     rc_ppm = RCPPMGenerator()
     time.sleep(0.2)
-    rc_ppm.set_channel_values([-1.0] * rc_ppm.NUM_CHANNELS)
+    rc_ppm.set_channel_values([0.0] * rc_ppm.NUM_CHANNELS)
+    time.sleep(2)
+    rc_ppm.set_channel_values([0.9] * rc_ppm.NUM_CHANNELS)
     time.sleep(10)
     rc_ppm.cleanup()
