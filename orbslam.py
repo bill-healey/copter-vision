@@ -3,9 +3,8 @@
 import json
 import math
 import subprocess
-
-import numpy as np
 import zmq
+import numpy as np
 
 
 class OrbSlam:

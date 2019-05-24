@@ -1,16 +1,15 @@
 # Author: William Healey http://billhealey.com
 
 import traceback
-from time import sleep
-
 import cv2
 
+from time import sleep
 from copter_marker_vision import CopterMarkerVision
 from display import Display
 from drone_pids import DronePIDs
 from drone_rc_controller import DroneRCController
-from joystick_input import JoystickInput
 from orbslam import OrbSlam
+from joystick_input import JoystickInput
 
 
 class DroneManager:
@@ -29,18 +28,20 @@ class DroneManager:
         self.shared_state['slam_telemetry'] = self.orbslam.process(self.shared_state)
 
         # Scan keyboard
-        self.shared_state['cv_keyboard'] = self.handle_opencv_keyboard_input()
+        self.shared_state['cv_keyboard'] = self.handle_opencv_keyboard_input() # Unreliable, should remove
         self.shared_state['pygame_keyboard'] = self.display.get_keyboard_events()
 
         # Tune yaw on spacebar
         if 'space' in self.shared_state.get('pygame_keyboard'):
             self.pids.pids['yaw'].begin_tuning()
 
-        # Lock in setpoints on 'S' key
+        # Hold current position on 's' key
         if 's' in self.shared_state.get('pygame_keyboard') and 'last_known_pose' in self.shared_state['slam_telemetry']:
             self.pids.hold_current_position(self.shared_state['slam_telemetry']['last_known_pose'])
 
-        # Only update PIDs if new telemetry pose data is available
+        # Only update PIDs if new telemetry pose data is available.
+        # Telemetry via ORBSLAM is sent at consistent intervals.
+        #  (if that is not the case, this needs to be changed so PIDs are still updated regularly)
         if self.shared_state['slam_telemetry'].get('pose_update'):
             self.shared_state['pid_output'] = self.pids.update(self.shared_state['slam_telemetry']['pose_update'])
             self.drone_rc_controller.update_channels(
@@ -50,7 +51,7 @@ class DroneManager:
                 self.shared_state['pid_output']['yaw'],
             )
 
-        # Kill throttle if telemetry is lost
+        # Interrupt output stream whenever telemetry is lost
         if self.shared_state['slam_telemetry'].get('telemetry_lost'):
             self.drone_rc_controller.pause_stream()
         self.display.rerender(self.shared_state)

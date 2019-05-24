@@ -1,7 +1,6 @@
 # Author: William Healey http://billhealey.com
 
 import random
-
 from display import Display
 
 
