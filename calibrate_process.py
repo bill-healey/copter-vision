@@ -1,19 +1,17 @@
-#!/usr/bin/env python
+# Author: William Healey http://billhealey.com
 
-# Python 2/3 compatibility
 from __future__ import print_function
 from time import sleep
+import glob
 
 import numpy as np
 import cv2
-import glob
-import os
 
 if __name__ == '__main__':
 
-    img_names = glob.glob('calibration_images/*.png')
+    img_names = glob.glob('superx/*.png')
 
-    pattern_size = (6, 7)
+    pattern_size = (5, 4)
     pattern_points = np.zeros((np.prod(pattern_size), 3), np.float32)
     pattern_points[:, :2] = np.indices(pattern_size).T.reshape(-1, 2)
 
@@ -41,7 +39,7 @@ if __name__ == '__main__':
         k = cv2.waitKey(30) & 0xff
         if k == 27:
             break
-        sleep(2.0)
+        sleep(.2)
 
         if not found:
             print('chessboard not found')
@@ -53,10 +51,22 @@ if __name__ == '__main__':
         print('ok')
 
     # calculate camera distortion
-    rms, camera_matrix, dist_coefs, rvecs, tvecs = cv2.calibrateCamera(obj_points, img_points, (w, h), None, None)
+    ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(obj_points, img_points, (w, h), None, None)
+    np.savez("webcam_calibration_ouput.npz", ret=ret, mtx=mtx, dist=dist, rvecs=rvecs, tvecs=tvecs)
 
-    print("\nRMS:", rms)
-    print("camera matrix:\n", camera_matrix)
-    print("distortion coefficients: ", dist_coefs.ravel())
+    print("\nRMS:", ret)
+    print("camera matrix:\n", mtx)
+    print("distortion coefficients: ", dist.ravel(), '\n')
+
+    print('Camera.fx: {:.09}'.format(mtx[0][0]))
+    print('Camera.fy: {:.09}'.format(mtx[1][1]))
+    print('Camera.cx: {:.09}'.format(mtx[0][2]))
+    print('Camera.cy: {:.09}'.format(mtx[1][2]))
+
+    print('Camera.k1: {:.09}'.format(dist.ravel()[0]))
+    print('Camera.k2: {:.09}'.format(dist.ravel()[1]))
+    print('Camera.p1: {:.09}'.format(dist.ravel()[2]))
+    print('Camera.p2: {:.09}'.format(dist.ravel()[3]))
+    print('Camera.k3: {:.09}'.format(dist.ravel()[4]))
 
     cv2.destroyAllWindows()
