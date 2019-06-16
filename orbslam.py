@@ -18,8 +18,9 @@ class OrbSlam:
         self.connect()
         try:
             with open('config.ini', 'rb') as fp:
-                self.desired_position_translation_matrix = pickle.load(fp)
+                (self.desired_position_translation_matrix, self.desired_yaw) = pickle.load(fp)
         except:
+            self.desired_yaw = 0.0
             self.desired_position_translation_matrix = np.array([0,0,0], dtype=np.float64)
 
         self.world_to_drone_rotation_matrix = np.array([[1,0,0],
@@ -71,20 +72,22 @@ class OrbSlam:
             #   pitch,
             #    roll
             #)
-            print self.desired_position_translation_matrix
             if 'hold_current_position' in previous_state.get('user_input'):
                 self.desired_position_translation_matrix = translation_from_world_origin
+                self.desired_yaw = yaw
                 with open('config.ini', 'wb') as fp:
-                    pickle.dump(self.desired_position_translation_matrix, fp)
+                    pickle.dump((self.desired_position_translation_matrix, self.desired_yaw), fp)
 
             translation_from_desired_position = translation_from_world_origin - self.desired_position_translation_matrix
 
             # Create rotation matrix to make translation vector relative to drone's concept of forward
+            #TODO: consider using desired yaw for this calculation
             self.world_to_drone_rotation_matrix = np.array([[math.cos(yaw), 0, -math.sin(yaw)],
                                                            [0, 1, 0],
                                                            [math.sin(yaw), 0, math.cos(yaw)]], dtype=np.float64)
 
             forward_relative_translation = np.matmul(self.world_to_drone_rotation_matrix, translation_from_desired_position)
+            relative_yaw = yaw - self.desired_yaw
 
             return ({
                 'telemetry_lost': False,
@@ -92,7 +95,7 @@ class OrbSlam:
                     'right_dist': forward_relative_translation.item(0)*1.0,
                     'forward_dist': forward_relative_translation.item(2)*1.0,
                     'vertical_dist': -forward_relative_translation.item(1)*1.0,
-                    'yaw': yaw,
+                    'yaw': relative_yaw,
                     'pitch': pitch,
                     'roll': roll,
                 },
@@ -100,7 +103,7 @@ class OrbSlam:
                     'right_dist': forward_relative_translation.item(0)*1.0,
                     'forward_dist': forward_relative_translation.item(2)*1.0,
                     'vertical_dist': -forward_relative_translation.item(1)*1.0,
-                    'yaw': yaw,
+                    'yaw': relative_yaw,
                     'pitch': pitch,
                     'roll': roll,
                 }

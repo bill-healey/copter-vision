@@ -27,40 +27,39 @@ class DroneManager:
     def update_drone_position_from_user_input(self, shared_state):
         translate_step = 0.01
         yaw_step = 0.10
+        translate_step_vector = np.array([[0],[0],[0]],dtype=np.float64)
 
         if 'tune_yaw' in shared_state.get('user_input'):
             self.pids.pids['yaw'].begin_tuning()
 
+        # Handle Translation
         if 'translate_forward' in shared_state.get('user_input'):
-            # Forward is in the +Z direction, relative to the drone.  First convert into world coordinates then apply.
-            translate_step_vector = np.array([[0],[0],[1]],dtype=np.float64) * translate_step
-            print(np.transpose(self.orbslam.world_to_drone_rotation_matrix))
-            world_step_vector = np.matmul(np.transpose(self.orbslam.world_to_drone_rotation_matrix), translate_step_vector)
-            print(world_step_vector)
-            self.orbslam.desired_position_translation_matrix += world_step_vector
+            # Forward is in the +Z direction, relative to the drone
+            translate_step_vector += np.array([[0],[0],[1]],dtype=np.float64) * translate_step
         if 'translate_backward' in shared_state.get('user_input'):
-            # Backward is in the -Z direction, relative to the drone.  First convert into world coordinates then apply.
-            translate_step_vector = np.array([[0],[0],[-1]],dtype=np.float64) * translate_step
-            world_step_vector = np.transpose(self.orbslam.world_to_drone_rotation_matrix) * translate_step_vector
-            self.orbslam.desired_position_translation_matrix += world_step_vector
-        if 'translate_up' in shared_state.get('user_input'):
-            self.pids.setpoints['throttle'] += translate_step
+            # Backward is in the -Z direction, relative to the drone
+            translate_step_vector += np.array([[0],[0],[-1]],dtype=np.float64) * translate_step
         if 'translate_down' in shared_state.get('user_input'):
-            self.pids.setpoints['throttle'] -= translate_step
+            # Down is in the +Y direction, relative to the drone
+            translate_step_vector += np.array([[0],[1],[0]],dtype=np.float64) * translate_step
+        if 'translate_up' in shared_state.get('user_input'):
+            # Up is in the -Y direction, relative to the drone
+            translate_step_vector += np.array([[0],[-1],[0]],dtype=np.float64) * translate_step
         if 'translate_left' in shared_state.get('user_input'):
-            # Left is in the -X direction, relative to the drone.  First convert into world coordinates then apply.
-            translate_step_vector = np.array([[-1],[0],[0]],dtype=np.float64) * translate_step
-            world_step_vector = np.transpose(self.orbslam.world_to_drone_rotation_matrix) * translate_step_vector
-            self.orbslam.desired_position_translation_matrix += world_step_vector
+            # Left is in the -X direction, relative to the drone
+            translate_step_vector += np.array([[-1],[0],[0]],dtype=np.float64) * translate_step
         if 'translate_right' in shared_state.get('user_input'):
-            # Right is in the +X direction, relative to the drone.  First convert into world coordinates then apply.
-            translate_step_vector = np.array([[1],[0],[0]],dtype=np.float64) * translate_step
-            world_step_vector = np.transpose(self.orbslam.world_to_drone_rotation_matrix) * translate_step_vector
-            self.orbslam.desired_position_translation_matrix += world_step_vector
+            # Right is in the +X direction, relative to the drone
+            translate_step_vector += np.array([[1],[0],[0]],dtype=np.float64) * translate_step
+
+        # Rotate translate_step_vector into world coordinates, then apply
+        world_step_vector = np.matmul(np.transpose(self.orbslam.world_to_drone_rotation_matrix), translate_step_vector)
+        self.orbslam.desired_position_translation_matrix += world_step_vector
+
         if 'yaw_left' in shared_state.get('user_input'):
-            self.pids.setpoints['yaw'] -= yaw_step
+            self.orbslam.desired_yaw -= yaw_step
         if 'yaw_right' in shared_state.get('user_input'):
-            self.pids.setpoints['yaw'] += yaw_step
+            self.orbslam.desired_yaw -= yaw_step
 
 
     def process_loop(self):
