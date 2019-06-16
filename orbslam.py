@@ -5,6 +5,7 @@ import math
 import subprocess
 import zmq
 import numpy as np
+import pickle
 
 
 class OrbSlam:
@@ -15,6 +16,15 @@ class OrbSlam:
         self.zmq_context = zmq.Context()
         self.socket = self.zmq_context.socket(zmq.SUB)
         self.connect()
+        try:
+            with open('config.ini', 'rb') as fp:
+                self.desired_position_translation_matrix = pickle.load(fp)
+        except:
+            self.desired_position_translation_matrix = np.array([0,0,0], dtype=np.float64)
+
+        self.world_to_drone_rotation_matrix = np.array([[1,0,0],
+                                                        [0,1,0],
+                                                        [0,0,1]], dtype=np.float64)
 
     def start_orbslam(self):
         self.orbslam_process = subprocess.Popen(['D:\\orbslam\\ORB_SLAM2\\Examples\\Live'], stdout=subprocess.PIPE)
@@ -47,7 +57,7 @@ class OrbSlam:
             # Compute Pose Translation Vector
             rot = pose.copy()[:3, :3]  # Rotation matrix
             mtcw = pose.copy()[:3, 3:]
-            translation = -np.transpose(rot.copy()) * mtcw
+            translation_from_world_origin = -np.transpose(rot.copy()) * mtcw
 
             roll = math.atan2(rot.item(1, 0), rot.item(0, 0))
             yaw = -math.atan2(-rot.item(2, 0), math.sqrt(rot.item(2, 1) ** 2 + rot.item(2, 2) ** 2))
@@ -61,21 +71,35 @@ class OrbSlam:
             #   pitch,
             #    roll
             #)
+            print self.desired_position_translation_matrix
+            if 'hold_current_position' in previous_state.get('user_input'):
+                self.desired_position_translation_matrix = translation_from_world_origin
+                with open('config.ini', 'wb') as fp:
+                    pickle.dump(self.desired_position_translation_matrix, fp)
+
+            translation_from_desired_position = translation_from_world_origin - self.desired_position_translation_matrix
+
+            # Create rotation matrix to make translation vector relative to drone's concept of forward
+            self.world_to_drone_rotation_matrix = np.array([[math.cos(yaw), 0, -math.sin(yaw)],
+                                                           [0, 1, 0],
+                                                           [math.sin(yaw), 0, math.cos(yaw)]], dtype=np.float64)
+
+            forward_relative_translation = np.matmul(self.world_to_drone_rotation_matrix, translation_from_desired_position)
 
             return ({
                 'telemetry_lost': False,
                 'last_known_pose': {
-                    'right_dist': translation.item(0)*1.0,
-                    'forward_dist': translation.item(2)*1.0,
-                    'vertical_dist': translation.item(1)*-1.0,
+                    'right_dist': forward_relative_translation.item(0)*1.0,
+                    'forward_dist': forward_relative_translation.item(2)*1.0,
+                    'vertical_dist': -forward_relative_translation.item(1)*1.0,
                     'yaw': yaw,
                     'pitch': pitch,
                     'roll': roll,
                 },
                 'pose_update': {
-                    'right_dist': translation.item(0)*1.0,
-                    'forward_dist': translation.item(2)*1.0,
-                    'vertical_dist': translation.item(1)*-1.0,
+                    'right_dist': forward_relative_translation.item(0)*1.0,
+                    'forward_dist': forward_relative_translation.item(2)*1.0,
+                    'vertical_dist': -forward_relative_translation.item(1)*1.0,
                     'yaw': yaw,
                     'pitch': pitch,
                     'roll': roll,

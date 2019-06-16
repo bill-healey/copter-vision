@@ -16,13 +16,13 @@ class DronePIDs:
         #     'yaw',      p=0.5, i=0.01, d=0.20, output_limits=(-1.0, 1.0), input_limits=(-1.0, 1.0))
 
         self.pids['aileron'] = PIDController(
-            'aileron',  p=0.8, i=0.01, d=0.30, output_limits=(-1.0, 1.0), input_limits=(-1.0, 1.0))
+            'aileron',  p=0.5, i=0.01, d=0.40, output_limits=(-1.0, 1.0), input_limits=(-1.0, 1.0))
         self.pids['pitch'] = PIDController(
-            'pitch',    p=0.6, i=0.01, d=0.40, output_limits=(-1.0, 1.0), input_limits=(-1.0, 1.0))
+            'pitch',    p=0.5, i=0.01, d=0.40, output_limits=(-1.0, 1.0), input_limits=(-1.0, 1.0))
         self.pids['throttle'] = PIDController(
-            'throttle', p=1.6, i=0.30, d=0.80, output_limits=(-1.0, 1.0), input_limits=(-1.0, 1.0))
+            'throttle', p=1.0, i=0.60, d=0.7, output_limits=(-1.0, 1.0), input_limits=(-1.0, 1.0))
         self.pids['yaw'] = PIDController(
-            'yaw',      p=0.5, i=0.01, d=0.20, output_limits=(-1.0, 1.0), input_limits=(-1.0, 1.0))
+            'yaw',      p=0.25, i=0.03, d=0.08, output_limits=(-1.0, 1.0), input_limits=(-1.0, 1.0))
 
         self.setpoints = {
             'aileron': 0.0,

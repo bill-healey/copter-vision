@@ -111,9 +111,26 @@ class Display:
                 if event.key == pygame.K_ESCAPE:
                     raise Exception('Shutdown')
                 if event.key == pygame.K_SPACE:
-                    retval.append('spacebar')
+                    retval.append('tune_yaw')
                 if event.key == pygame.K_s:
-                    retval.append('s')
+                    retval.append('hold_current_position')
+                if event.key == pygame.K_UP:
+                    retval.append('translate_forward')
+                if event.key == pygame.K_DOWN:
+                    retval.append('translate_backward')
+                if event.key == pygame.K_LEFT:
+                    retval.append('yaw_left')
+                if event.key == pygame.K_RIGHT:
+                    retval.append('yaw_right')
+                if event.key == pygame.K_KP8:
+                    retval.append('translate_up')
+                if event.key == pygame.K_KP5:
+                    retval.append('translate_down')
+                if event.key == pygame.K_KP4:
+                    retval.append('translate_left')
+                if event.key == pygame.K_KP6:
+                    retval.append('translate_right')
+
         return retval
 
     def cleanup(self):

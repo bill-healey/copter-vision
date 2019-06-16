@@ -9,6 +9,8 @@ from display import Display
 from drone_pids import DronePIDs
 from drone_rc_controller import DroneRCController
 from orbslam import OrbSlam
+import numpy as np
+import pickle
 from joystick_input import JoystickInput
 
 
@@ -22,22 +24,55 @@ class DroneManager:
         self.shared_state = {}
         #self.joystick = JoystickInput()
 
+    def update_drone_position_from_user_input(self, shared_state):
+        translate_step = 0.01
+        yaw_step = 0.10
+
+        if 'tune_yaw' in shared_state.get('user_input'):
+            self.pids.pids['yaw'].begin_tuning()
+
+        if 'translate_forward' in shared_state.get('user_input'):
+            # Forward is in the +Z direction, relative to the drone.  First convert into world coordinates then apply.
+            translate_step_vector = np.array([[0],[0],[1]],dtype=np.float64) * translate_step
+            print(np.transpose(self.orbslam.world_to_drone_rotation_matrix))
+            world_step_vector = np.matmul(np.transpose(self.orbslam.world_to_drone_rotation_matrix), translate_step_vector)
+            print(world_step_vector)
+            self.orbslam.desired_position_translation_matrix += world_step_vector
+        if 'translate_backward' in shared_state.get('user_input'):
+            # Backward is in the -Z direction, relative to the drone.  First convert into world coordinates then apply.
+            translate_step_vector = np.array([[0],[0],[-1]],dtype=np.float64) * translate_step
+            world_step_vector = np.transpose(self.orbslam.world_to_drone_rotation_matrix) * translate_step_vector
+            self.orbslam.desired_position_translation_matrix += world_step_vector
+        if 'translate_up' in shared_state.get('user_input'):
+            self.pids.setpoints['throttle'] += translate_step
+        if 'translate_down' in shared_state.get('user_input'):
+            self.pids.setpoints['throttle'] -= translate_step
+        if 'translate_left' in shared_state.get('user_input'):
+            # Left is in the -X direction, relative to the drone.  First convert into world coordinates then apply.
+            translate_step_vector = np.array([[-1],[0],[0]],dtype=np.float64) * translate_step
+            world_step_vector = np.transpose(self.orbslam.world_to_drone_rotation_matrix) * translate_step_vector
+            self.orbslam.desired_position_translation_matrix += world_step_vector
+        if 'translate_right' in shared_state.get('user_input'):
+            # Right is in the +X direction, relative to the drone.  First convert into world coordinates then apply.
+            translate_step_vector = np.array([[1],[0],[0]],dtype=np.float64) * translate_step
+            world_step_vector = np.transpose(self.orbslam.world_to_drone_rotation_matrix) * translate_step_vector
+            self.orbslam.desired_position_translation_matrix += world_step_vector
+        if 'yaw_left' in shared_state.get('user_input'):
+            self.pids.setpoints['yaw'] -= yaw_step
+        if 'yaw_right' in shared_state.get('user_input'):
+            self.pids.setpoints['yaw'] += yaw_step
+
+
     def process_loop(self):
+        # Scan keyboard
+        self.shared_state['cv_keyboard'] = self.handle_opencv_keyboard_input() # Unreliable, should remove
+        self.shared_state['user_input'] = self.display.get_keyboard_events()
+
         # Get Telemetry
         # self.shared_state['marker_telemetry'] = self.marker_vision.process()
         self.shared_state['slam_telemetry'] = self.orbslam.process(self.shared_state)
 
-        # Scan keyboard
-        self.shared_state['cv_keyboard'] = self.handle_opencv_keyboard_input() # Unreliable, should remove
-        self.shared_state['pygame_keyboard'] = self.display.get_keyboard_events()
-
-        # Tune yaw on spacebar
-        if 'space' in self.shared_state.get('pygame_keyboard'):
-            self.pids.pids['yaw'].begin_tuning()
-
-        # Hold current position on 's' key
-        if 's' in self.shared_state.get('pygame_keyboard') and 'last_known_pose' in self.shared_state['slam_telemetry']:
-            self.pids.hold_current_position(self.shared_state['slam_telemetry']['last_known_pose'])
+        self.update_drone_position_from_user_input(self.shared_state)
 
         # Only update PIDs if new telemetry pose data is available.
         # Telemetry via ORBSLAM is sent at consistent intervals.
